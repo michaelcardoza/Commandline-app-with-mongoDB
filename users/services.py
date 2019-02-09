@@ -1,25 +1,20 @@
 import pymongo
 
-clientdb = pymongo.MongoClient('mongodb://localhost:27017')
-db = clientdb['escuela3d']
-user_collection = db['users']
-
 
 class UserService:
 
-    def __init__(self):
-        pass
+    def __init__(self, database):
+        self.__db_client = pymongo.MongoClient(database['db_client'])
+        self.__db_name = self.__db_client[database['db_name']]
+        self.__user_collection = self.__db_name['users']
 
-    @staticmethod
-    def create_user(user):
-        user_collection.insert_one(user.to_dict())
+    def create_user(self, user):
+        self.__user_collection.insert_one(user.to_dict())
 
-    @staticmethod
-    def delete_user(username):
-        user_collection.delete_one({"username": username})
+    def delete_user(self, username):
+        self.__user_collection.delete_one({"username": username})
 
-    @staticmethod
-    def update_client(username, values):
+    def update_client(self, username, values):
         query = {
             "username": username
         }
@@ -31,8 +26,14 @@ class UserService:
             }
         }
 
-        user_collection.update_one(query, new_values)
+        self.__user_collection.update_one(query, new_values)
 
-    @staticmethod
-    def list_users():
-        return user_collection.find()
+    def list_users(self):
+        return self.__user_collection.find()
+
+    def search_users(self, key, value):
+        query = {
+            key: value
+        }
+
+        return self.__user_collection.find(query)

@@ -14,8 +14,9 @@ def users():
 @click.option('-n', '--fullname', type=str, prompt=True, help='Name')
 @click.option('-e', '--email', type=str, prompt=True, help='Email')
 @click.option('-p', '--phone', type=str, prompt=True, help='Phone')
-def create(username, fullname, email, phone):
-    user_service = services.UserService()
+@click.pass_context
+def create(ctx, username, fullname, email, phone):
+    user_service = services.UserService(ctx.obj['database'])
     all_users = user_service.list_users()
 
     user = [user for user in all_users if user['username'] == username]
@@ -31,8 +32,9 @@ def create(username, fullname, email, phone):
 @users.command()
 @click.option('-u', '--username', type=str, prompt=True, help='Username')
 @click.confirmation_option(prompt='sure you want to delete the user?')
-def delete(username):
-    user_service = services.UserService()
+@click.pass_context
+def delete(ctx, username):
+    user_service = services.UserService(ctx.obj['database'])
     all_users = user_service.list_users()
 
     user = [user for user in all_users if user['username'] == username]
@@ -46,8 +48,9 @@ def delete(username):
 
 @users.command()
 @click.option('-u', '--username', type=str, prompt=True, help='Username')
-def update(username):
-    user_service = services.UserService()
+@click.pass_context
+def update(ctx, username):
+    user_service = services.UserService(ctx.obj['database'])
     all_users = user_service.list_users()
 
     user = [user for user in all_users if user['username'] == username]
@@ -70,12 +73,28 @@ def _update_user_flow(user):
 
 
 @users.command()
-def tolist():
-    user_service = services.UserService()
+@click.pass_context
+def tolist(ctx):
+    user_service = services.UserService(ctx.obj['database'])
     all_users = user_service.list_users()
 
+    _print_users(all_users)
+
+
+@users.command()
+@click.option('--search-type', type=click.Choice(['username', 'fullname', 'email', 'phone']), prompt=True)
+@click.option('-v', '--value', type=str, prompt=True, help='Value')
+@click.pass_context
+def search(ctx, search_type, value):
+    user_service = services.UserService(ctx.obj['database'])
+    all_users = user_service.search_users(search_type, value)
+
+    _print_users(all_users)
+
+
+def _print_users(users_list):
     click.echo("UID | Username | Fullname | Emial | Phone")
-    for user in all_users:
+    for user in users_list:
         click.echo("{uid} | {username} | {fullname} | {email} | {phone}".format(
             uid=user['_id'],
             username=user['username'],
